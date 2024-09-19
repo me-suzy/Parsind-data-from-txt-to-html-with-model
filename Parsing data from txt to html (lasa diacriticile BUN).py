@@ -73,20 +73,31 @@ def create_html_file(model, article, output_dir):
     clean_desc_no_diacritics = unidecode(clean_desc)
 
     new_content = model
+    # Extragem link-ul canonical nou
+    canonical_link = f"https://neculaifantanaru.com/{slug}.html"
+
+    # Actualizează secțiunile <title>, <meta description> și <link rel="canonical">
     new_content = re.sub(r'<title>.*?\| Neculai Fantanaru</title>', f'<title>{clean_title_no_diacritics} | Neculai Fantanaru</title>', new_content)
     new_content = re.sub(r'<meta name="description" content=".*?">', f'<meta name="description" content="{clean_desc_no_diacritics}">', new_content)
-    new_content = re.sub(r'<link rel="canonical" href="https://neculaifantanaru.com/.*?"', f'<link rel="canonical" href="https://neculaifantanaru.com/{slug}.html"', new_content)
+    new_content = re.sub(r'<link rel="canonical" href="https://neculaifantanaru.com/.*?"', f'<link rel="canonical" href="{canonical_link}"', new_content)
+
+    # Înlocuirea primului link din secțiunea FLAGS
+    flags_pattern = r'(<a href="https://neculaifantanaru.com/.*?"><img src="index_files/flag_lang_ro.jpg"[^>]*>)'
+    new_content = re.sub(flags_pattern, f'<a href="{canonical_link}"><img src="index_files/flag_lang_ro.jpg"', new_content, count=1)
 
     # Setăm encoding-ul corect în HTML
     new_content = re.sub(r'<meta charset=".*?">', '<meta charset="UTF-8">', new_content)
 
+    # Înlocuirea conținutului articolului
     content_pattern = r'(<!-- ARTICOL START -->.*?<table.*?<td><h1 class="den_articol" itemprop="name">).*?(</h1></td>.*?</table>\s*)(.*?)(</div>\s*<p align="justify" class="text_obisnuit style3">&nbsp;</p>\s*<!-- ARTICOL FINAL -->)'
     replacement = r'\1{}\2\n{}\n\4'.format(clean_title, formatted_content)
     new_content = re.sub(content_pattern, replacement, new_content, flags=re.DOTALL)
 
+    # Fixează ghilimelele duble
     new_content = fix_double_quotes(new_content)
     new_content = fix_double_quotes_final(new_content)
 
+    # Scrie fișierul nou creat
     output_file = os.path.join(output_dir, f"{slug}.html")
 
     # Print new content before writing to file
@@ -97,6 +108,7 @@ def create_html_file(model, article, output_dir):
     print(content[:500])  # Afișează primele 500 de caractere pentru a verifica diacriticele
 
     print(f"Fișier creat: {output_file}")
+
 
 def main():
     model_file = 'e:\\Carte\\BB\\17 - Site Leadership\\alte\\Ionel Balauta\\Aryeht\\Task 1 - Traduce tot site-ul\\Doar Google Web\\Andreea\\Meditatii\\2023\\Iulia Python\\Parsing data from txt to html\\index.html'
