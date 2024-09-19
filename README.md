@@ -1,4 +1,4 @@
-# Parsind-data-from-txt-to-html-with-model
+# Parsing-data-from-txt-to-html-with-model
 Vreau sa copiez datele dintr-un fisier txt intr-un fisier html, dupa modelul index.html
 
 # Codul din oricare din cele 2 fisiere .py face urmatorul lucru:
