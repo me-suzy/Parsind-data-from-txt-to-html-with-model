@@ -46,8 +46,7 @@ def fix_double_quotes(content):
 
     return re.sub(r'(\w+)="([^"]*)"', replace_quotes, content)
 
-def fix_double_quotes_final(content):
-    return re.sub(r'""', '"', content)
+
 
 def clean_description(description):
     return re.sub(r'[":\'`]', '', description)
@@ -82,8 +81,9 @@ def create_html_file(model, article, output_dir):
     new_content = re.sub(r'<link rel="canonical" href="https://neculaifantanaru.com/.*?"', f'<link rel="canonical" href="{canonical_link}"', new_content)
 
     # Înlocuirea primului link din secțiunea FLAGS
-    flags_pattern = r'(<a href="https://neculaifantanaru.com/.*?"><img src="index_files/flag_lang_ro.jpg"[^>]*>)'
-    new_content = re.sub(flags_pattern, f'<a href="{canonical_link}"><img src="index_files/flag_lang_ro.jpg"', new_content, count=1)
+    flags_pattern = r'(<a href="https://neculaifantanaru.com/.*?")(<img src="index_files/flag_lang_ro.jpg"[^>]*>)'
+    new_content = re.sub(flags_pattern, f'<a href="{canonical_link}">\2', new_content, count=1)
+
 
     # Setăm encoding-ul corect în HTML
     new_content = re.sub(r'<meta charset=".*?">', '<meta charset="UTF-8">', new_content)
@@ -95,7 +95,7 @@ def create_html_file(model, article, output_dir):
 
     # Fixează ghilimelele duble
     new_content = fix_double_quotes(new_content)
-    new_content = fix_double_quotes_final(new_content)
+
 
     # Scrie fișierul nou creat
     output_file = os.path.join(output_dir, f"{slug}.html")
