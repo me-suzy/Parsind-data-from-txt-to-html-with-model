@@ -33,6 +33,17 @@ def format_content(content, description):
         if line:
             if line.startswith('Leadership:'):
                 formatted_lines.append(f'\t\t<p class="text_obisnuit2">{line}</p>')
+            elif line.lower().startswith('nota:') or line.lower().startswith('* nota:'):
+                # Separăm "Nota:" de restul conținutului
+                nota_parts = line.split(':', 1)
+                if len(nota_parts) > 1:
+                    nota_text = nota_parts[0] + ':'
+                    nota_content = nota_parts[1].strip()
+                    formatted_line = f'\t\t<p class="text_obisnuit"><span class="text_obisnuit2">* {nota_text} </span>{nota_content}</p>'
+                    formatted_lines.append(formatted_line)
+                else:
+                    # În cazul în care nu există conținut după "Nota:", formatăm linia ca atare
+                    formatted_lines.append(f'\t\t<p class="text_obisnuit"><span class="text_obisnuit2">{line}</span></p>')
             else:
                 formatted_lines.append(f'\t\t<p class="text_obisnuit">{line}</p>')
 
@@ -58,32 +69,26 @@ def create_html_file(model, article, output_dir):
     description = lines[2].strip() if len(lines) > 2 else ""
     content = '\n'.join(lines[3:]) if len(lines) > 3 else ""
 
-    # Print content to check formatting
-    print("Conținut articol:\n", content[:1000])  # Afișează primele 1000 de caractere
-
     slug = create_slug(title)
     formatted_content = format_content(content, description)
 
     clean_title = clean_description(title)
     clean_desc = clean_description(description)
 
-    # Eliminate diacritics for title and meta description
     clean_title_no_diacritics = unidecode(clean_title)
     clean_desc_no_diacritics = unidecode(clean_desc)
 
     new_content = model
-    # Extragem link-ul canonical nou
     canonical_link = f"https://neculaifantanaru.com/{slug}.html"
 
     # Actualizează secțiunile <title>, <meta description> și <link rel="canonical">
     new_content = re.sub(r'<title>.*?\| Neculai Fantanaru</title>', f'<title>{clean_title_no_diacritics} | Neculai Fantanaru</title>', new_content)
     new_content = re.sub(r'<meta name="description" content=".*?">', f'<meta name="description" content="{clean_desc_no_diacritics}">', new_content)
-    new_content = re.sub(r'<link rel="canonical" href="https://neculaifantanaru.com/.*?"', f'<link rel="canonical" href="{canonical_link}"', new_content)
+    new_content = re.sub(r'<link rel="canonical" href=".*?"', f'<link rel="canonical" href="{canonical_link}"', new_content)
 
-    # Înlocuirea primului link din secțiunea FLAGS
-    flags_pattern = r'(<a href="https://neculaifantanaru.com/.*?")(<img src="index_files/flag_lang_ro.jpg"[^>]*>)'
-    new_content = re.sub(flags_pattern, f'<a href="{canonical_link}">\2', new_content, count=1)
-
+    # Înlocuirea URL-ului în secțiunea FLAGS_1
+    flags_pattern = r'(<!-- FLAGS_1 -->.*?<div class="cautareField">.*?<div align="right">.*?<a href=").*?(".*?<img src="index_files/flag_lang_ro\.jpg")'
+    new_content = re.sub(flags_pattern, f'\\1{canonical_link}\\2', new_content, flags=re.DOTALL)
 
     # Setăm encoding-ul corect în HTML
     new_content = re.sub(r'<meta charset=".*?">', '<meta charset="UTF-8">', new_content)
@@ -96,16 +101,11 @@ def create_html_file(model, article, output_dir):
     # Fixează ghilimelele duble
     new_content = fix_double_quotes(new_content)
 
-
     # Scrie fișierul nou creat
     output_file = os.path.join(output_dir, f"{slug}.html")
 
-    # Print new content before writing to file
-    print("Conținut final HTML:\n", new_content[:1000])  # Afișează primele 1000 de caractere
-
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(new_content)
-    print(content[:500])  # Afișează primele 500 de caractere pentru a verifica diacriticele
 
     print(f"Fișier creat: {output_file}")
 
